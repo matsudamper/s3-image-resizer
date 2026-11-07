@@ -67,6 +67,11 @@ func Resize(data []byte, maxPixels int64, resize ResizeSpec, output OutputSpec) 
 	}
 
 	if scale := scaleFactor(img.Width(), img.Height(), resize); scale != 1 {
+		// 拡大を許した場合も出力の画素数は入力と同じ上限に収める
+		outWidth, outHeight := int64(float64(img.Width())*scale), int64(float64(img.Height())*scale)
+		if outWidth*outHeight > maxPixels {
+			return nil, ErrTooManyPixels
+		}
 		if err := img.Resize(scale, vips.KernelLanczos3); err != nil {
 			return nil, fmt.Errorf("%w: resize: %v", ErrDecode, err)
 		}

@@ -131,6 +131,14 @@ func TestResizeRejectsTooManyPixels(t *testing.T) {
 	}
 }
 
+func TestResizeRejectsUpscaleBeyondPixelLimit(t *testing.T) {
+	src := encodePNG(t, 100, 100)
+	_, err := Resize(src, 1_000_000, ResizeSpec{ShortSide: 2000, MaxLongSide: 2000}, OutputSpec{Quality: 80})
+	if !errors.Is(err, ErrTooManyPixels) {
+		t.Fatalf("got %v want ErrTooManyPixels", err)
+	}
+}
+
 func TestResizeRejectsUnsupportedFormat(t *testing.T) {
 	_, err := Resize([]byte("%PDF-1.4 ..."), 60_000_000, ResizeSpec{ShortSide: 10, MaxLongSide: 10}, OutputSpec{Quality: 80})
 	if !errors.Is(err, ErrUnsupportedFormat) {
