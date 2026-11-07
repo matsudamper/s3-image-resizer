@@ -1,27 +1,8 @@
 # s3-image-resizer
 
-## 概要
-S3 互換ストレージ上の画像を縮小して WebP に変換し、同じストレージに書き戻す Go 製 HTTP API。Go と libvips を使用する。
-呼び出し元の OIDC JWT を検証し、STS `AssumeRoleWithWebIdentity` で S3 にアクセスする。
-
-## 構成
-- `cmd/server/` — サーバーのエントリーポイント
-- `internal/server/` — HTTP API（`POST /v1/resize`、`GET /healthz`）
-- `internal/auth/` — OIDC discovery / JWKS による JWT 検証
-- `internal/storage/` — STS と S3 互換ストレージへのアクセス
-- `internal/image/` — libvips による画像判定・縮小・WebP 変換
-- `internal/config/` — 環境変数による設定
-
-## ビルド・静的解析
-Go、libvips（HEIF 対応）と pkg-config が必要。
-
-```sh
-go build ./cmd/server
-test -z "$(gofmt -l .)"
-go vet ./...
-```
-
-包括的なテストは CI（`go test ./...`）で実行する。ローカルでのテスト実行範囲は下記の共通ルールに従う。
+## 開発
+- 画像処理に libvips（HEIF 対応）と pkg-config が必要
+- サーバーのビルド: `go build ./cmd/server`
 
 # 共通ルール
 
