@@ -57,16 +57,25 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
+	// Shutdown は処理中のハンドラを待つので、終わるまで main を抜けて libvips を落とさない
+	shutdownDone := make(chan struct{})
 	go func() {
+		defer close(shutdownDone)
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.RequestTimeout)
 		defer cancel()
-		_ = httpServer.Shutdown(shutdownCtx)
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			logger.Error("shutdown did not finish cleanly", "error", err)
+		}
 	}()
 
 	logger.Info("listening", "addr", cfg.ListenAddr)
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Error("server stopped", "error", err)
+	listenErr := httpServer.ListenAndServe()
+	stop()
+	<-shutdownDone
+	if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+		logger.Error("server stopped", "error", listenErr)
+		image.Shutdown()
 		os.Exit(1)
 	}
 }
