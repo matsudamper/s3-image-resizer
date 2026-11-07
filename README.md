@@ -42,30 +42,11 @@ S3 互換ストレージ上の画像を縮小して、同じストレージに W
 
 204 を返す。
 
-## 設定（環境変数）
-
-| 変数 | 必須 | 既定値 | 説明 |
-| --- | --- | --- | --- |
-| `OIDC_ISSUER` | 必須 | | JWT の issuer。`/.well-known/openid-configuration` から JWKS を取得する |
-| `OIDC_AUDIENCE` | 必須 | | JWT に要求する `aud` |
-| `STS_ENDPOINT` | 必須 | | STS のエンドポイント |
-| `STS_ROLE_ARN` | 必須 | | `AssumeRoleWithWebIdentity` するロール |
-| `S3_ENDPOINT` | 必須 | | S3 のエンドポイント |
-| `ALLOWED_BUCKETS` | 必須 | | 操作を許可するバケット（カンマ区切り） |
-| `LISTEN_ADDR` | | `:8080` | |
-| `S3_REGION` | | `us-east-1` | |
-| `S3_PATH_STYLE_ACCESS` | | `true` | |
-| `STS_ROLE_SESSION_NAME` | | `s3-image-resizer` | |
-| `STS_DURATION_SECONDS` | | `900` | |
-| `MAX_SOURCE_BYTES` | | `52428800` | 元画像のバイト数上限 |
-| `MAX_SOURCE_PIXELS` | | `60000000` | 元画像の画素数上限 |
-| `MAX_CONCURRENCY` | | `2` | 同時に処理する変換数 |
-| `REQUEST_TIMEOUT` | | `60s` | 1 リクエストの処理時間上限 |
-
 ## 実行
 
+`docker-compose.yaml` の `environment` を書き換えて起動する。
+
 ```sh
-cp .env.example .env
 docker compose up -d
 ```
 
