@@ -12,10 +12,10 @@ const (
 	FormatHEIF Format = "heif"
 )
 
-// heifBrands は ISO BMFF の ftyp major brand のうち、静止画の HEIF/HEIC として扱うもの。
+// heifBrands は ISO BMFF の ftyp major brand のうち HEIF/HEIC として受け付けるもの。
+// govips v2 の判定（heic / mif1 / msf1）と揃える。それ以外の brand はロードできず 422 になるので受け付けない。
 var heifBrands = map[string]struct{}{
-	"heic": {}, "heix": {}, "hevc": {}, "hevx": {},
-	"heif": {}, "mif1": {}, "msf1": {},
+	"heic": {}, "mif1": {}, "msf1": {},
 }
 
 // DetectFormat は拡張子や Content-Type ではなくマジックバイトで形式を判定する。

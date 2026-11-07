@@ -69,6 +69,7 @@ func TestDetectFormat(t *testing.T) {
 		"webp": {[]byte("RIFF....WEBPVP8 "), FormatWebP, true},
 		"heic": {append([]byte{0, 0, 0, 0x18}, []byte("ftypheic")...), FormatHEIF, true},
 		"mif1": {append([]byte{0, 0, 0, 0x18}, []byte("ftypmif1")...), FormatHEIF, true},
+		"heix": {append([]byte{0, 0, 0, 0x18}, []byte("ftypheix")...), "", false},
 		"mp4":  {append([]byte{0, 0, 0, 0x18}, []byte("ftypisom")...), "", false},
 		"svg":  {[]byte("<svg xmlns=\"http://www.w3.org/2000/svg\"/>"), "", false},
 		"pdf":  {[]byte("%PDF-1.4"), "", false},
