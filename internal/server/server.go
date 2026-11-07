@@ -14,7 +14,13 @@ import (
 	"github.com/matsudamper/s3-image-resizer/internal/config"
 	"github.com/matsudamper/s3-image-resizer/internal/image"
 	"github.com/matsudamper/s3-image-resizer/internal/storage"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer = otel.Tracer("github.com/matsudamper/s3-image-resizer/internal/server")
 
 const (
 	maxRequestBodyBytes = 16 * 1024
@@ -86,6 +92,11 @@ func (s *Server) handleResize(w http.ResponseWriter, r *http.Request) {
 		if !errors.As(err, &apiErr) {
 			apiErr = newAPIError(http.StatusInternalServerError, "INTERNAL_ERROR", "internal error")
 		}
+		span := trace.SpanFromContext(r.Context())
+		span.SetAttributes(attribute.String("resize.error", apiErr.code))
+		if apiErr.status >= 500 {
+			span.SetStatus(codes.Error, apiErr.code)
+		}
 		if apiErr.status >= 500 {
 			s.logger.Error("resize failed", "error", err)
 		} else {
@@ -124,12 +135,18 @@ func (s *Server) resize(r *http.Request) error {
 		return newAPIError(http.StatusServiceUnavailable, "BUSY", "too many concurrent requests")
 	}
 
-	session, err := s.storage.AssumeWithWebIdentity(ctx, token)
+	trace.SpanFromContext(ctx).SetAttributes(
+		attribute.String("resize.source.bucket", req.Source.Bucket),
+		attribute.String("resize.source.key", req.Source.Key),
+		attribute.String("resize.destination.key", req.Destination.Key),
+	)
+
+	session, err := s.assumeRole(ctx, token)
 	if err != nil {
 		return newAPIError(http.StatusBadGateway, "STORAGE_ERROR", err.Error())
 	}
 
-	source, err := session.Get(ctx, req.Source.Bucket, req.Source.Key, s.cfg.MaxSourceBytes)
+	source, err := s.getSource(ctx, session, req)
 	switch {
 	case errors.Is(err, storage.ErrNotFound):
 		return newAPIError(http.StatusNotFound, "SOURCE_NOT_FOUND", "source object not found")
@@ -139,16 +156,7 @@ func (s *Server) resize(r *http.Request) error {
 		return newAPIError(http.StatusBadGateway, "STORAGE_ERROR", err.Error())
 	}
 
-	output, err := image.Resize(
-		source,
-		s.cfg.MaxSourcePixels,
-		image.ResizeSpec{
-			ShortSide:     req.Resize.ShortSide,
-			MaxLongSide:   req.Resize.MaxLongSide,
-			OnlyScaleDown: *req.Resize.OnlyScaleDown,
-		},
-		image.OutputSpec{Quality: req.Output.Quality},
-	)
+	output, err := s.convert(ctx, source, req)
 	switch {
 	case errors.Is(err, image.ErrUnsupportedFormat):
 		return newAPIError(http.StatusUnsupportedMediaType, "UNSUPPORTED_FORMAT", "source format is not supported")
@@ -160,10 +168,61 @@ func (s *Server) resize(r *http.Request) error {
 		return err
 	}
 
-	if err := session.Put(ctx, req.Destination.Bucket, req.Destination.Key, "image/webp", output); err != nil {
+	if err := s.putDestination(ctx, session, req, output); err != nil {
 		return newAPIError(http.StatusBadGateway, "STORAGE_ERROR", err.Error())
 	}
 	return nil
+}
+
+func (s *Server) assumeRole(ctx context.Context, token string) (*storage.Session, error) {
+	ctx, span := tracer.Start(ctx, "sts.assume_role_with_web_identity")
+	defer span.End()
+	session, err := s.storage.AssumeWithWebIdentity(ctx, token)
+	recordError(span, err)
+	return session, err
+}
+
+func (s *Server) getSource(ctx context.Context, session *storage.Session, req ResizeRequest) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "s3.get_object")
+	defer span.End()
+	source, err := session.Get(ctx, req.Source.Bucket, req.Source.Key, s.cfg.MaxSourceBytes)
+	recordError(span, err)
+	span.SetAttributes(attribute.Int("resize.source.bytes", len(source)))
+	return source, err
+}
+
+func (s *Server) convert(ctx context.Context, source []byte, req ResizeRequest) ([]byte, error) {
+	_, span := tracer.Start(ctx, "image.resize")
+	defer span.End()
+	output, err := image.Resize(
+		source,
+		s.cfg.MaxSourcePixels,
+		image.ResizeSpec{
+			ShortSide:     req.Resize.ShortSide,
+			MaxLongSide:   req.Resize.MaxLongSide,
+			OnlyScaleDown: *req.Resize.OnlyScaleDown,
+		},
+		image.OutputSpec{Quality: req.Output.Quality},
+	)
+	recordError(span, err)
+	span.SetAttributes(attribute.Int("resize.output.bytes", len(output)))
+	return output, err
+}
+
+func (s *Server) putDestination(ctx context.Context, session *storage.Session, req ResizeRequest, output []byte) error {
+	ctx, span := tracer.Start(ctx, "s3.put_object")
+	defer span.End()
+	err := session.Put(ctx, req.Destination.Bucket, req.Destination.Key, "image/webp", output)
+	recordError(span, err)
+	return err
+}
+
+func recordError(span trace.Span, err error) {
+	if err == nil {
+		return
+	}
+	span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
 }
 
 func (s *Server) validate(req *ResizeRequest) error {

@@ -26,6 +26,9 @@ services:
       # 同時に処理する変換数と、1 リクエストの処理時間上限
       MAX_CONCURRENCY: "2"
       REQUEST_TIMEOUT: 60s
+      # 設定すると OTLP/HTTP でトレースとメトリクスを送る。未設定なら送らない
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4318
+      # OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production
     read_only: true
     tmpfs:
       - /tmp

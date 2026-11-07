@@ -15,6 +15,8 @@ import (
 	"github.com/matsudamper/s3-image-resizer/internal/image"
 	"github.com/matsudamper/s3-image-resizer/internal/server"
 	"github.com/matsudamper/s3-image-resizer/internal/storage"
+	"github.com/matsudamper/s3-image-resizer/internal/telemetry"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func main() {
@@ -28,6 +30,19 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	telemetryShutdown, err := telemetry.Setup(ctx)
+	if err != nil {
+		logger.Error("telemetry setup failed", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := telemetryShutdown(shutdownCtx); err != nil {
+			logger.Error("telemetry shutdown failed", "error", err)
+		}
+	}()
 
 	verifier, err := auth.NewVerifier(ctx, cfg.OIDCIssuer, cfg.OIDCAudience, &http.Client{Timeout: 10 * time.Second})
 	if err != nil {
@@ -50,7 +65,7 @@ func main() {
 
 	httpServer := &http.Server{
 		Addr:              cfg.ListenAddr,
-		Handler:           server.New(cfg, verifier, store, logger).Handler(),
+		Handler:           otelhttp.NewHandler(server.New(cfg, verifier, store, logger).Handler(), "http.server"),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      cfg.RequestTimeout + 10*time.Second,
