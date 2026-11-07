@@ -16,7 +16,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 )
 
-const serviceName = "s3-image-resizer"
+// defaultServiceName は OTEL_SERVICE_NAME が未設定のときの service.name
+const defaultServiceName = "s3-image-resizer"
 
 // Setup は OTEL_EXPORTER_OTLP_ENDPOINT が設定されているときだけ OTLP/HTTP でトレースとメトリクスを送る。
 // 未設定なら何もしない no-op のプロバイダのまま。
@@ -25,10 +26,11 @@ func Setup(ctx context.Context) (shutdown func(context.Context) error, err error
 		return func(context.Context) error { return nil }, nil
 	}
 
+	// 後に書いたオプションが優先されるので、既定値を先に置いて環境変数で上書きできるようにする
 	res, err := resource.New(ctx,
-		resource.WithFromEnv(),
+		resource.WithAttributes(semconv.ServiceName(defaultServiceName)),
 		resource.WithTelemetrySDK(),
-		resource.WithAttributes(semconv.ServiceName(serviceName)),
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, err
