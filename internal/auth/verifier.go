@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -54,7 +55,8 @@ func (v *Verifier) Verify(ctx context.Context, token string) error {
 }
 
 func discoverJWKSURL(ctx context.Context, issuer string, httpClient *http.Client) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, issuer+"/.well-known/openid-configuration", nil)
+	// iss の比較は完全一致なので issuer は設定値のまま保ち、末尾の / は discovery URL を組むときだけ落とす
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(issuer, "/")+"/.well-known/openid-configuration", nil)
 	if err != nil {
 		return "", err
 	}

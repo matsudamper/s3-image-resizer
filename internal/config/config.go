@@ -34,7 +34,7 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		ListenAddr:         getenv("LISTEN_ADDR", ":8080"),
-		OIDCIssuer:         strings.TrimSuffix(os.Getenv("OIDC_ISSUER"), "/"),
+		OIDCIssuer:         os.Getenv("OIDC_ISSUER"),
 		OIDCAudience:       os.Getenv("OIDC_AUDIENCE"),
 		STSEndpoint:        os.Getenv("STS_ENDPOINT"),
 		STSRoleARN:         os.Getenv("STS_ROLE_ARN"),
