@@ -168,8 +168,8 @@ func (s *Server) resize(r *http.Request) error {
 
 func (s *Server) validate(req *ResizeRequest) error {
 	for name, ref := range map[string]ObjectRef{"source": req.Source, "destination": req.Destination} {
-		if !s.cfg.BucketAllowed(ref.Bucket) {
-			return newAPIError(http.StatusBadRequest, "INVALID_REQUEST", name+".bucket is not allowed")
+		if ref.Bucket == "" {
+			return newAPIError(http.StatusBadRequest, "INVALID_REQUEST", name+".bucket is required")
 		}
 		if err := validateKey(ref.Key); err != nil {
 			return newAPIError(http.StatusBadRequest, "INVALID_REQUEST", fmt.Sprintf("%s.key: %v", name, err))

@@ -14,8 +14,6 @@ services:
       STS_ENDPOINT: https://s3.example.com
       STS_ROLE_ARN: arn:aws:iam::000000000000:role/image
       S3_ENDPOINT: https://s3.example.com
-      # 操作を許可するバケット（カンマ区切り）
-      ALLOWED_BUCKETS: images
       # 以下は省略可（値は既定値）
       LISTEN_ADDR: ":8080"
       S3_REGION: us-east-1

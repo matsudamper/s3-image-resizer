@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -22,8 +21,6 @@ type Config struct {
 	S3Endpoint        string
 	S3Region          string
 	S3PathStyleAccess bool
-
-	AllowedBuckets []string
 
 	MaxSourceBytes  int64
 	MaxSourcePixels int64
@@ -62,11 +59,6 @@ func Load() (Config, error) {
 	if cfg.RequestTimeout, err = getenvDuration("REQUEST_TIMEOUT", 60*time.Second); err != nil {
 		return cfg, err
 	}
-	for _, b := range strings.Split(os.Getenv("ALLOWED_BUCKETS"), ",") {
-		if b = strings.TrimSpace(b); b != "" {
-			cfg.AllowedBuckets = append(cfg.AllowedBuckets, b)
-		}
-	}
 
 	for name, value := range map[string]string{
 		"OIDC_ISSUER":   cfg.OIDCIssuer,
@@ -79,22 +71,10 @@ func Load() (Config, error) {
 			return cfg, fmt.Errorf("%s is required", name)
 		}
 	}
-	if len(cfg.AllowedBuckets) == 0 {
-		return cfg, fmt.Errorf("ALLOWED_BUCKETS is required")
-	}
 	if cfg.MaxConcurrency < 1 {
 		return cfg, fmt.Errorf("MAX_CONCURRENCY must be >= 1")
 	}
 	return cfg, nil
-}
-
-func (c Config) BucketAllowed(bucket string) bool {
-	for _, b := range c.AllowedBuckets {
-		if b == bucket {
-			return true
-		}
-	}
-	return false
 }
 
 func getenv(name, fallback string) string {

@@ -27,7 +27,7 @@ S3 互換ストレージ上の画像を縮小して、同じストレージに W
 | ステータス | `error` | 意味 |
 | --- | --- | --- |
 | 204 | - | 成功。`destination` に書き込み済み |
-| 400 | `INVALID_REQUEST` | JSON 不正、バケット不許可、キー不正、パラメータ範囲外 |
+| 400 | `INVALID_REQUEST` | JSON 不正、キー不正、パラメータ範囲外 |
 | 401 | `INVALID_TOKEN` | JWT が無い、または検証失敗 |
 | 404 | `SOURCE_NOT_FOUND` | 元オブジェクトが無い |
 | 413 | `TOO_LARGE` | `MAX_SOURCE_BYTES` または `MAX_SOURCE_PIXELS` 超過 |

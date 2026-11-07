@@ -28,7 +28,7 @@ func TestValidateKey(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	s := &Server{cfg: config.Config{AllowedBuckets: []string{"images"}}}
+	s := &Server{cfg: config.Config{}}
 
 	valid := func() ResizeRequest {
 		var r ResizeRequest
@@ -46,8 +46,8 @@ func TestValidate(t *testing.T) {
 	}
 
 	cases := map[string]func(r *ResizeRequest){
-		"bucket not allowed":    func(r *ResizeRequest) { r.Source.Bucket = "other" },
-		"dest bucket":           func(r *ResizeRequest) { r.Destination.Bucket = "other" },
+		"source bucket empty":   func(r *ResizeRequest) { r.Source.Bucket = "" },
+		"dest bucket empty":     func(r *ResizeRequest) { r.Destination.Bucket = "" },
 		"same object":           func(r *ResizeRequest) { r.Destination = r.Source },
 		"bad key":               func(r *ResizeRequest) { r.Destination.Key = "../x" },
 		"shortSide zero":        func(r *ResizeRequest) { r.Resize.ShortSide = 0 },
