@@ -1,6 +1,6 @@
 module github.com/matsudamper/s3-image-resizer
 
-go 1.26.0
+go 1.26.10
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.47.8
@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.9
 	github.com/davidbyttow/govips/v2 v2.16.0
 	github.com/lestrrat-go/jwx/v2 v2.1.7
+	github.com/lestrrat-go/jwx/v4 v4.6.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.47.0
