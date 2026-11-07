@@ -1,0 +1,44 @@
+services:
+  s3-image-resizer:
+    image: ghcr.io/matsudamper/s3-image-resizer:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # JWT の issuer。<issuer>/.well-known/openid-configuration から JWKS を取得する
+      OIDC_ISSUER: https://example.com
+      # JWT に要求する aud
+      OIDC_AUDIENCE: sts.amazonaws.com
+      # 検証済み JWT で AssumeRoleWithWebIdentity する STS とロール
+      STS_ENDPOINT: https://s3.example.com
+      STS_ROLE_ARN: arn:aws:iam::000000000000:role/image
+      S3_ENDPOINT: https://s3.example.com
+      # 以下は省略可（値は既定値）
+      LISTEN_ADDR: ":8080"
+      S3_REGION: us-east-1
+      S3_PATH_STYLE_ACCESS: "true"
+      STS_ROLE_SESSION_NAME: s3-image-resizer
+      STS_DURATION_SECONDS: "900"
+      # 元画像のバイト数と画素数の上限
+      MAX_SOURCE_BYTES: "52428800"
+      MAX_SOURCE_PIXELS: "60000000"
+      # 同時に処理する変換数と、1 リクエストの処理時間上限
+      MAX_CONCURRENCY: "2"
+      REQUEST_TIMEOUT: 60s
+      # 設定すると OTLP/HTTP でトレースとメトリクスを送る。未設定なら送らない
+      # OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4318
+      # OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "65532:65532"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1g
