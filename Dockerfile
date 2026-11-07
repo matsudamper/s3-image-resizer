@@ -7,7 +7,8 @@ RUN apt-get update \
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+COPY cmd ./cmd
+COPY internal ./internal
 RUN CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/s3-image-resizer ./cmd/server
 
 FROM debian:bookworm-slim
