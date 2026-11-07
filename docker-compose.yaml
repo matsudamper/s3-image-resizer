@@ -1,0 +1,22 @@
+services:
+  s3-image-resizer:
+    image: ghcr.io/matsudamper/s3-image-resizer:latest
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "65532:65532"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1g
