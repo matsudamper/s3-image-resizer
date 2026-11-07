@@ -17,12 +17,12 @@ S3 互換ストレージ上の画像を縮小して、同じストレージに W
 {
   "source":      { "bucket": "images", "key": "img/2026-11/abc.heic" },
   "destination": { "bucket": "images", "key": "img/2026-11/abc.thumb.webp" },
-  "resize":      { "shortSide": 384, "maxLongSide": 1536 },
+  "resize":      { "shortSide": 384, "maxLongSide": 1536, "onlyScaleDown": true },
   "output":      { "format": "webp", "quality": 80 }
 }
 ```
 
-縮小率は `min(shortSide / 短辺, maxLongSide / 長辺, 1)`。拡大はしない。`quality` は省略時 80。
+縮小率は `min(shortSide / 短辺, maxLongSide / 長辺)`。`onlyScaleDown`（省略時 true）なら 1 を上限にして拡大しない。`quality` は省略時 80。
 
 | ステータス | `error` | 意味 |
 | --- | --- | --- |

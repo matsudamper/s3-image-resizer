@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestScaleFactor(t *testing.T) {
-	spec := ResizeSpec{ShortSide: 384, MaxLongSide: 1536}
+	spec := ResizeSpec{ShortSide: 384, MaxLongSide: 1536, OnlyScaleDown: true}
 	cases := []struct {
 		name          string
 		width, height int
@@ -42,6 +42,19 @@ func TestScaleFactor(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("upscale when OnlyScaleDown is false", func(t *testing.T) {
+		got := scaleFactor(192, 300, ResizeSpec{ShortSide: 384, MaxLongSide: 1536})
+		if got < 2-1e-9 || got > 2+1e-9 {
+			t.Fatalf("got %v want 2", got)
+		}
+	})
+	t.Run("upscale is still capped by MaxLongSide", func(t *testing.T) {
+		got := scaleFactor(100, 1000, ResizeSpec{ShortSide: 384, MaxLongSide: 1536})
+		if got < 1.536-1e-9 || got > 1.536+1e-9 {
+			t.Fatalf("got %v want 1.536", got)
+		}
+	})
 }
 
 func TestDetectFormat(t *testing.T) {
@@ -75,7 +88,7 @@ func TestDetectFormat(t *testing.T) {
 func TestResizeProducesWebpWithExpectedSize(t *testing.T) {
 	src := encodePNG(t, 1200, 400)
 
-	out, err := Resize(src, 60_000_000, ResizeSpec{ShortSide: 100, MaxLongSide: 1000}, OutputSpec{Quality: 80})
+	out, err := Resize(src, 60_000_000, ResizeSpec{ShortSide: 100, MaxLongSide: 1000, OnlyScaleDown: true}, OutputSpec{Quality: 80})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +108,7 @@ func TestResizeProducesWebpWithExpectedSize(t *testing.T) {
 
 func TestResizeDoesNotUpscale(t *testing.T) {
 	src := encodeJPEG(t, 50, 80)
-	out, err := Resize(src, 60_000_000, ResizeSpec{ShortSide: 384, MaxLongSide: 1536}, OutputSpec{Quality: 80})
+	out, err := Resize(src, 60_000_000, ResizeSpec{ShortSide: 384, MaxLongSide: 1536, OnlyScaleDown: true}, OutputSpec{Quality: 80})
 	if err != nil {
 		t.Fatal(err)
 	}

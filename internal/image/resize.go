@@ -18,6 +18,8 @@ type ResizeSpec struct {
 	ShortSide int
 	// MaxLongSide は縮小後の長辺の上限。縦長画像で ShortSide を満たすと長辺が伸びすぎるのを抑える。
 	MaxLongSide int
+	// OnlyScaleDown が true なら元画像が目標より小さくても拡大しない。
+	OnlyScaleDown bool
 }
 
 type OutputSpec struct {
@@ -64,7 +66,7 @@ func Resize(data []byte, maxPixels int64, resize ResizeSpec, output OutputSpec) 
 		return nil, fmt.Errorf("%w: autorotate: %v", ErrDecode, err)
 	}
 
-	if scale := scaleFactor(img.Width(), img.Height(), resize); scale < 1 {
+	if scale := scaleFactor(img.Width(), img.Height(), resize); scale != 1 {
 		if err := img.Resize(scale, vips.KernelLanczos3); err != nil {
 			return nil, fmt.Errorf("%w: resize: %v", ErrDecode, err)
 		}
@@ -95,7 +97,7 @@ func Resize(data []byte, maxPixels int64, resize ResizeSpec, output OutputSpec) 
 	return out, nil
 }
 
-// scaleFactor は min(ShortSide/短辺, MaxLongSide/長辺, 1) を返す。
+// scaleFactor は min(ShortSide/短辺, MaxLongSide/長辺) を返す。OnlyScaleDown なら 1 を上限にする。
 func scaleFactor(width, height int, spec ResizeSpec) float64 {
 	short, long := width, height
 	if short > long {
@@ -105,7 +107,7 @@ func scaleFactor(width, height int, spec ResizeSpec) float64 {
 	if byLong := float64(spec.MaxLongSide) / float64(long); byLong < scale {
 		scale = byLong
 	}
-	if scale > 1 {
+	if spec.OnlyScaleDown && scale > 1 {
 		return 1
 	}
 	return scale

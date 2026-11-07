@@ -31,8 +31,9 @@ type ResizeRequest struct {
 	Source      ObjectRef `json:"source"`
 	Destination ObjectRef `json:"destination"`
 	Resize      struct {
-		ShortSide   int `json:"shortSide"`
-		MaxLongSide int `json:"maxLongSide"`
+		ShortSide     int   `json:"shortSide"`
+		MaxLongSide   int   `json:"maxLongSide"`
+		OnlyScaleDown *bool `json:"onlyScaleDown"`
 	} `json:"resize"`
 	Output struct {
 		Format  string `json:"format"`
@@ -141,7 +142,11 @@ func (s *Server) resize(r *http.Request) error {
 	output, err := image.Resize(
 		source,
 		s.cfg.MaxSourcePixels,
-		image.ResizeSpec{ShortSide: req.Resize.ShortSide, MaxLongSide: req.Resize.MaxLongSide},
+		image.ResizeSpec{
+			ShortSide:     req.Resize.ShortSide,
+			MaxLongSide:   req.Resize.MaxLongSide,
+			OnlyScaleDown: *req.Resize.OnlyScaleDown,
+		},
 		image.OutputSpec{Quality: req.Output.Quality},
 	)
 	switch {
@@ -178,6 +183,10 @@ func (s *Server) validate(req *ResizeRequest) error {
 	}
 	if req.Resize.MaxLongSide < req.Resize.ShortSide {
 		return newAPIError(http.StatusBadRequest, "INVALID_REQUEST", "resize.maxLongSide must be >= resize.shortSide")
+	}
+	if req.Resize.OnlyScaleDown == nil {
+		onlyScaleDown := true
+		req.Resize.OnlyScaleDown = &onlyScaleDown
 	}
 	if req.Output.Format != "webp" {
 		return newAPIError(http.StatusBadRequest, "INVALID_REQUEST", "output.format must be \"webp\"")

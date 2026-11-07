@@ -69,6 +69,13 @@ func TestValidate(t *testing.T) {
 		})
 	}
 
+	t.Run("onlyScaleDown defaults to true", func(t *testing.T) {
+		r := valid()
+		if err := s.validate(&r); err != nil || r.Resize.OnlyScaleDown == nil || !*r.Resize.OnlyScaleDown {
+			t.Fatalf("err=%v onlyScaleDown=%v", err, r.Resize.OnlyScaleDown)
+		}
+	})
+
 	t.Run("quality defaults", func(t *testing.T) {
 		r := valid()
 		r.Output.Quality = 0
