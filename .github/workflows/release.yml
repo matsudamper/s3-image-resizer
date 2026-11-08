@@ -10,6 +10,11 @@ on:
         description: 'イメージに付けるタグ（例: v1.2.3）'
         required: true
         type: string
+      create_release:
+        description: 'GitHub Release を latest として作成する'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -60,3 +65,19 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  github-release:
+    needs: docker-push
+    # タグ push 時は常に作成し、手動実行時はチェックボックスで選ぶ
+    if: github.event_name == 'push' || inputs.create_release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          TARGET: ${{ github.sha }}
+        run: gh release create "$TAG" --target "$TARGET" --generate-notes --latest
