@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/smithy-go/middleware"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 var (
@@ -70,8 +72,26 @@ func (c *Client) AssumeWithWebIdentity(ctx context.Context, token string) (*Sess
 		BaseEndpoint: aws.String(c.opts.S3Endpoint),
 		Credentials:  provider,
 		UsePathStyle: c.opts.S3PathStyleAccess,
+		APIOptions:   []func(*middleware.Stack) error{removeAcceptEncodingBeforeSigning},
 	})
 	return &Session{s3: s3Client}, nil
+}
+
+// SDK は Accept-Encoding: identity を付けて署名対象に含めるが、Cloudflare などのプロキシは
+// この値を書き換えるため、オリジンで SignatureDoesNotMatch になる。署名前に外して署名対象から除く
+func removeAcceptEncodingBeforeSigning(stack *middleware.Stack) error {
+	return stack.Finalize.Insert(
+		middleware.FinalizeMiddlewareFunc("RemoveAcceptEncoding", func(
+			ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler,
+		) (middleware.FinalizeOutput, middleware.Metadata, error) {
+			if req, ok := in.Request.(*smithyhttp.Request); ok {
+				req.Header.Del("Accept-Encoding")
+			}
+			return next.HandleFinalize(ctx, in)
+		}),
+		"Signing",
+		middleware.Before,
+	)
 }
 
 func (s *Session) Get(ctx context.Context, bucket, key string, maxBytes int64) ([]byte, error) {
