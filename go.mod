@@ -3,11 +3,11 @@ module github.com/matsudamper/s3-image-resizer
 go 1.26.10
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.47.8
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.16
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.9
-	github.com/aws/aws-sdk-go-v2/service/sts v1.51.9
-	github.com/aws/smithy-go v1.28.8
+	github.com/aws/aws-sdk-go-v2 v1.48.2
+	github.com/aws/aws-sdk-go-v2/credentials v1.21.5
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.116.2
+	github.com/aws/aws-sdk-go-v2/service/sts v1.53.2
+	github.com/aws/smithy-go v1.28.11
 	github.com/davidbyttow/govips/v2 v2.20.0
 	github.com/lestrrat-go/jwx/v2 v2.1.7
 	github.com/lestrrat-go/jwx/v4 v4.6.0
@@ -21,14 +21,14 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.26 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.24 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.11 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.29 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.27 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.14 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
